@@ -2,6 +2,10 @@
 
 Source: `tenai_repo/webapp/db.py`, `tenai_repo/scripts/conductor/watcher_db.py`
 
+> **Note:** Sections marked PROVISIONAL are based on the public Yelp/DataAgentBench dataset
+> structure and have not been verified against a live database. Update this document once
+> actual databases are running and schemas are confirmed.
+
 ## Webapp DB (`~/.tenai/tenai.db`)
 
 ### devices
@@ -148,7 +152,109 @@ UNIQUE constraint: (org, name)
 
 ---
 
-## Valid Joins
+## MongoDB — Yelp Business DB (`yelp_db.business`) — PROVISIONAL
+
+Source: DataAgentBench Yelp dataset.
+
+### business
+
+| Field | Type | Notes |
+|---|---|---|
+| business_id | String | Primary identifier, 22-char string |
+| name | String | Business name |
+| address | String | Street address |
+| city | String | |
+| state | String | 2-letter state code |
+| postal_code | String | |
+| latitude | Double | |
+| longitude | Double | |
+| stars | Double | Average rating, 1.0–5.0 in 0.5 steps |
+| review_count | Integer | Total number of reviews |
+| is_open | Integer | 0 = closed, 1 = open |
+| categories | String | Comma-separated category list |
+| attributes | Object | Nested key-value pairs (for example WiFi, Parking) |
+| hours | Object | Nested open and close times by day of week |
+
+**No SQL joins apply.** Use `find()` or an aggregation pipeline.
+Cross-database references via `business_id` are resolved in application code.
+
+---
+
+## DuckDB — Yelp Review DB (`yelp_review.parquet` or equivalent) — PROVISIONAL
+
+Source: DataAgentBench Yelp dataset.
+
+### review
+
+| Column | Type | Notes |
+|---|---|---|
+| review_id | VARCHAR | PRIMARY KEY, 22-char string |
+| user_id | VARCHAR | References PostgreSQL users.user_id |
+| business_id | VARCHAR | References MongoDB business.business_id — see Join Key Warning |
+| stars | INTEGER | Rating 1–5 |
+| useful | INTEGER | Useful votes received |
+| funny | INTEGER | Funny votes received |
+| cool | INTEGER | Cool votes received |
+| text | VARCHAR | Full review text |
+| date | VARCHAR | ISO timestamp of review |
+
+**No DuckDB-internal joins apply.** Cross-database references via `business_id` and
+`user_id` are resolved in application code.
+
+---
+
+## PostgreSQL — Yelp User/Social DB — PROVISIONAL
+
+Source: DataAgentBench Yelp dataset.
+
+### users
+
+| Column | Type | Notes |
+|---|---|---|
+| user_id | VARCHAR | PRIMARY KEY, 22-char string |
+| name | VARCHAR | Display name |
+| review_count | INTEGER | Number of reviews written |
+| yelping_since | VARCHAR | ISO timestamp of account creation |
+| friends | TEXT | Comma-separated list of friend user IDs |
+| useful | INTEGER | Total useful votes given |
+| funny | INTEGER | Total funny votes given |
+| cool | INTEGER | Total cool votes given |
+| fans | INTEGER | Number of fans |
+| elite | VARCHAR | Comma-separated years of Elite status |
+| average_stars | DOUBLE PRECISION | Average rating across all reviews |
+| compliment_hot | INTEGER | |
+| compliment_more | INTEGER | |
+| compliment_profile | INTEGER | |
+| compliment_cute | INTEGER | |
+| compliment_list | INTEGER | |
+| compliment_note | INTEGER | |
+| compliment_plain | INTEGER | |
+| compliment_funny | INTEGER | |
+| compliment_writer | INTEGER | |
+| compliment_photos | INTEGER | |
+
+### tip
+
+| Column | Type | Notes |
+|---|---|---|
+| user_id | VARCHAR | FOREIGN KEY → users(user_id) |
+| business_id | VARCHAR | References MongoDB business.business_id — see Join Key Warning |
+| text | TEXT | Tip text |
+| date | VARCHAR | ISO timestamp |
+| compliment_count | INTEGER | |
+
+### checkin
+
+| Column | Type | Notes |
+|---|---|---|
+| business_id | VARCHAR | References MongoDB `business.business_id` |
+| date | TEXT | Comma-separated list of ISO datetime strings for each checkin event |
+
+**Design note:** `checkin` has no `user_id`; checkins belong to the business only.
+
+---
+
+## Valid Joins — SQLite Databases
 
 ONLY these joins are confirmed in the schema. Do not attempt any other join.
 
@@ -162,6 +268,42 @@ ONLY these joins are confirmed in the schema. Do not attempt any other join.
 **Cross-database joins (Webapp DB ↔ Device DB) are NOT valid via SQL.**
 The two databases are separate SQLite files. They cannot be joined in a single
 query. Queries must be run separately and results merged in application code.
+
+---
+
+## Valid Joins — PostgreSQL (Yelp) — PROVISIONAL
+
+| Join | Key | Type |
+|---|---|---|
+| tip → users | tip.user_id = users.user_id | INNER/LEFT |
+
+All other cross-table references in the Yelp databases involve `business_id`. Those are
+not valid SQL joins.
+
+---
+
+## JOIN KEY WARNING — business_id Format Mismatch
+
+`business_id` appears in four places across three databases:
+
+| Database | Table/Collection | Field | Format Note |
+|---|---|---|---|
+| MongoDB | business | business_id | 22-char alphanumeric string |
+| DuckDB | review | business_id | **Confirmed inconsistent with MongoDB** |
+| PostgreSQL | tip | business_id | Format unverified |
+| PostgreSQL | checkin | business_id | Format unverified |
+
+**Confirmed by the challenge brief:** `business_id` values are formatted inconsistently
+between MongoDB and DuckDB. The agent must not assume a direct match.
+
+**Not confirmed:** Whether the PostgreSQL `tip` and `checkin` columns share the same
+format.
+
+Resolution approach:
+1. Query each database separately
+2. Inspect actual `business_id` samples from each source
+3. Apply only the transformations the data requires
+4. Merge results in Python using the confirmed key
 
 ---
 
