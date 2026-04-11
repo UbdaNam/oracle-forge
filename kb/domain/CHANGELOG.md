@@ -4,4 +4,5 @@
 - unstructured-field-inventory.md — Free-text fields inventory with extraction patterns (INJECTION TEST: PASS)
 
 ## v1 — 2026-04-09 — Intelligence Officers (BLOOM Team)
-- KB v2 domain documents pending
+- Folder created, domain documents planned
+- Ruth's 3 sections (pass@1 scoring, domain terms, dataset schemas) pending
