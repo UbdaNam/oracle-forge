@@ -8,19 +8,17 @@ Each entry: Date | Platform | Link | What it was about | Response (if any)
 
 ## Posts
 
-| Date      | Member    | Platform | Link                                                                                                                            | Topic                      |
-| --------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
-| 6/13/2026 | Abdurahim | LinkedIn | https://www.linkedin.com/posts/abdurahim-miftah_were-currently-working-on-a-data-agent-using-activity-7449657719202172928-bBEY/ | Cross-Database Key Clarity |
-
-| 6/14/2026 | Abdurahim | X | https://x.com/abdugreat2/status/2043783397131079819 | Context Across Databases |
-
-| | Efrata | | | |
+| Date      | Member    | Platform | Link                                                                                                                            | Topic                                 |
+| --------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 6/13/2026 | Abdurahim | LinkedIn | https://www.linkedin.com/posts/abdurahim-miftah_were-currently-working-on-a-data-agent-using-activity-7449657719202172928-bBEY/ | Cross-Database Key Clarity            |
+| 6/14/2026 | Abdurahim | X        | https://x.com/abdugreat2/status/2043783397131079819                                                                             | Context Across Databases              |
+|4/9/2026   | Efrata    | Reddit   | https://www.reddit.com/r/MachineLearning/comments/1la46eq/comment/og2zrbn/                                                      | Enterprise data integration nightmares|
 
 ## Community Participation Log
 
-| Date | Member | Platform | Link | What was said |
-| ---- | ------ | -------- | ---- | ------------- |
-|      |        |          |      |               |
+| Date         | Member  | Platform | Link                                                                          | What was said                                                                                          |
+| ------------ | ------- | -------- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+|  4/9/2026    |  Efrata | Reddit   | https://www.reddit.com/r/MachineLearning/comments/1la46eq/comment/og2zrbn/    |      Commented on r/MachineLearning "Why Is Enterprise Data Integration Always So Messy?" — connected to our DAB benchmark work         |
 
 ## Resources Acquired
 
