@@ -1,41 +1,43 @@
 # KB v2 - pass@1 Scoring Explanation
 
-## What pass@1 means in DAB
+## What is pass@1?
 
-In DataAgentBench (DAB), pass@1 is the first-answer correctness rate. Each query is scored only on the agent's first submitted response. If the first response is correct, the trial passes; if not, it fails. No retries, revisions, or later corrections are counted.
+In DataAgentBench (DAB), **pass@1** measures the percentage of queries where the agent produces a **correct answer on its first attempt**. Only the first response is scored — retries or revisions are not counted.
 
 ## How the evaluation works
 
-- DAB includes 54 benchmark queries across 12 datasets.
-- Each query is executed for at least 50 independent trials (n ≥ 50).
-- For each trial, the first answer is judged correct or incorrect.
-- pass@1 is calculated as:
-
-  correct first responses ÷ total trials
-
-  across all queries and trials.
+- DAB contains 54 queries across 12 datasets.
+- Each query is run for at least 50 independent trials (n ≥ 50).
+- For every trial, only the first answer is evaluated as correct or incorrect.
+- The pass@1 score is calculated as:  
+  **correct first responses ÷ total trials** across all queries and trials.
 
 ## Why pass@1 is used
 
-pass@1 is the chosen metric because it matches production expectations for a data analyst agent: deliver a correct answer on the first try. It rewards systems that combine correct reasoning, accurate tool execution, and precise context use in one pass.
+pass@1 reflects real-world production use: users expect a reliable answer on the first delivery. It strongly rewards high-quality context engineering, accurate tool use, and self-correction capability in a single pass.
 
-## What good and poor scores look like
+## Current Benchmark Scores
 
-- The current best published DAB pass@1 score is 54.3% by PromptQL + Gemini 3.1 Pro.
-- A strong score is near that benchmark.
-- A weak score is substantially lower, meaning the agent often fails its first response.
+- The best published score on the DAB leaderboard is **54.3%** (PromptQL + Gemini 3.1 Pro).
+- The original DAB paper reports **38% pass@1** for the best plain frontier model (Gemini-3-Pro).
 
-## What this score measures in practice
+## What These Scores Mean
 
-pass@1 measures the agent's ability to:
+- **54.3%** represents the current state-of-the-art for a full engineered system.
+- **38%** highlights the difficulty of the benchmark when relying only on a raw large language model without additional engineering.
 
-- route queries across multiple database systems,
-- resolve ill-formatted join keys,
-- transform unstructured text into structured facts,
-- apply domain knowledge correctly on the first attempt.
+A strong performance in this challenge is one that approaches or exceeds the current leaderboard benchmark of 54.3%.
 
-In production terms, it measures whether the agent is reliable at first delivery rather than recoverable after multiple attempts.
+## What pass@1 Measures in Practice
 
-## Why measurable improvement matters
+pass@1 tests the agent's ability to:
+- Route queries correctly across heterogeneous databases
+- Resolve ill-formatted join keys
+- Transform unstructured text into usable facts
+- Apply domain knowledge on the first attempt
 
-The challenge is built around measurable progress. Improving pass@1 between runs shows that the evaluation harness is capturing real gains in the agent's behavior and not just random variation. That improvement is the primary success signal for this benchmark.
+It measures first-delivery reliability rather than recoverability after failures.
+
+## Why Measurable Improvement Matters
+
+The Oracle Forge challenge requires measurable improvement in pass@1 between runs. This demonstrates that the evaluation harness is working and that updates to the Knowledge Base and self-correction mechanisms are producing real gains in agent performance.
