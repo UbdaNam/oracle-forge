@@ -1,0 +1,62 @@
+# Oracle Forge — MCP Toolbox Configuration
+# Google MCP Toolbox for Databases
+# Covers all 4 database types: PostgreSQL, MongoDB, SQLite, DuckDB
+#
+# NOTE: DuckDB and SQLite are file-based and accessed directly by the DAB agent.
+# PostgreSQL and MongoDB are configured here as MCP sources.
+# Full 4-DB support is provided via DAB's built-in QueryDBTool for SQLite/DuckDB.
+#
+# Usage:
+#   ./toolbox_v20 --tools-file agent/tools.yaml
+#   Toolbox runs on http://localhost:5000
+
+sources:
+  # PostgreSQL — bookreview dataset (Amazon books metadata)
+  postgres_bookreview:
+    kind: postgres
+    host: 127.0.0.1
+    port: 5432
+    user: amir
+    password: password
+    database: bookreview_db
+
+  # MongoDB — Yelp dataset (business metadata + checkins)
+  mongodb_yelp:
+    kind: mongodb
+    uri: mongodb://localhost:27017/yelp_db
+
+  # DuckDB — accessed directly via DAB QueryDBTool (file-based, no server needed)
+  # Path: /home/amir/DataAgentBench/query_yelp/query_dataset/yelp_user.db
+  # Tables: review (business_ref), tip, user
+
+  # SQLite — accessed directly via DAB QueryDBTool (file-based, no server needed)
+  # Path: /home/amir/DataAgentBench/query_bookreview/query_dataset/review_query.db
+  # Tables: review (purchase_id maps to book_id in PostgreSQL)
+
+tools:
+  query_postgres_bookreview:
+    kind: postgres-sql
+    source: postgres_bookreview
+    description: >
+      Run a read-only SQL query against the bookreview PostgreSQL database.
+      Contains books_info table with Amazon book metadata (title, author, price,
+      categories, book_id). Join key: book_id maps to purchase_id in SQLite review table.
+    parameters:
+      - name: query
+        type: string
+        description: A read-only SQL SELECT query
+
+  query_mongodb_yelp:
+    kind: mongodb-find
+    source: mongodb_yelp
+    description: >
+      Query the Yelp business MongoDB database.
+      Collections: business (business_id uses prefix businessid_), checkin.
+      Join key: replace businessid_ with businessref_ to match DuckDB review table.
+    parameters:
+      - name: collection
+        type: string
+        description: Collection name (business or checkin)
+      - name: filter
+        type: string
+        description: JSON object for MongoDB filter query

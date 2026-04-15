@@ -9,5 +9,9 @@
 - The business collection's "attributes" field includes services information (WiFi, parking, credit cards etc.) stored as a nested dict.
 - When processing tool results in execute_python, ALWAYS wrap results in pd.DataFrame() before accessing fields. Never use integer indices on dict results.
 - When a tool result is stored as a file path (string ending in .json), read it with: import json; data = json.load(open(file_path))
-- Always compute average ratings from the DuckDB review table's rating field, not from MongoDB review_count metadata.
+- CRITICAL: The rating column in DuckDB review table is stored as BIGINT. ALWAYS use CAST(rating AS FLOAT) or CAST(rating AS DOUBLE) when computing AVG(rating). Using AVG(rating) directly on BIGINT gives wrong integer-truncated results.
+- To get average rating for businesses in a specific city/state: (1) query MongoDB for ALL businesses matching the city in description field with NO limit, (2) get ALL their business_ids, (3) convert ALL to business_refs by replacing businessid_ with businessref_, (4) query DuckDB: SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...). ALWAYS use CAST(rating AS FLOAT) when computing averages — rating is stored as BIGINT and AVG(BIGINT) gives wrong results.
+- When querying MongoDB, ALWAYS set limit to 0 or 10000 to get ALL matching documents. Never use default limit which may truncate results.
+- NEVER use MongoDB review_count field to compute averages — it is a count not a rating.
+- NEVER use pandas merge for this — direct DuckDB SQL with CAST is correct and faster.
 - When returning a state name and number together, format as: "PA: 3.70" to keep them close together in the answer.

@@ -59,3 +59,28 @@ merged = pd.merge(df_reviews, df_business, on='id')
 TypeError: expected str, bytes or os.PathLike object, not list
 — agent passes a list where a string path is expected when reading stored results.
 Fix: always check type before passing to open() — use json.dumps() if result is already a dict/list.
+
+---
+
+## Correction 003 — 2026-04-15
+
+**Queries affected:** Q1, Q2, Q4, Q5 (Yelp dataset) — any query computing AVG(rating)
+
+**What was wrong:**
+The `rating` column in DuckDB `review` table is stored as `BIGINT`. Using `AVG(rating)` directly on a BIGINT column returns an integer-truncated result. For example, Q1 returned `3.86` instead of `3.547` because the average was computed incorrectly.
+
+Additionally, MongoDB queries were hitting a default limit of 5 documents, causing the agent to miss 3 of 8 Indianapolis businesses.
+
+**Correct approach:**
+1. Always use `CAST(rating AS FLOAT)` or `CAST(rating AS DOUBLE)` when computing averages:
+   ```sql
+   SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
+   ```
+2. Always set MongoDB query limit to 0 or 10000 to get ALL matching documents:
+   ```json
+   {"collection": "business", "filter": {...}, "limit": 10000}
+   ```
+
+**Evidence:**
+- 5 refs (with limit): AVG = 3.86 ❌
+- 8 refs (no limit) + CAST: AVG = 3.547 ✅

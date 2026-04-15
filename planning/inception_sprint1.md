@@ -97,12 +97,12 @@ This loop is the mechanism by which the agent improves without retraining.
 
 ### Interim Milestone — April 14
 
-- [ ] Agent running on server, handling minimum 2 database types
-- [ ] Basic natural language to query working
-- [ ] KB v1 and KB v2 committed with injection test results
-- [ ] Evaluation harness producing baseline score with query trace
-- [ ] GitHub repo has all required folders with content
-- [ ] Signal Corps has minimum 3 posts live with links in engagement_log.md
+- [x] Agent running on server, handling minimum 2 database types (MongoDB + DuckDB confirmed)
+- [x] Basic natural language to query working (Yelp Q1-Q7 running via OpenRouter)
+- [x] KB v1 and KB v2 committed with injection test results (all 7 docs PASS)
+- [x] Evaluation harness producing baseline score with query trace (0% → 28.6% → 57.1%)
+- [x] GitHub repo has all required folders with content
+- [x] Signal Corps has minimum 3 posts live with links in engagement_log.md
 - [ ] PostgreSQL Docker container running with --restart unless-stopped
 
 ### Final Milestone — April 18
