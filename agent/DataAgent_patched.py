@@ -1,3 +1,13 @@
+"""
+DataAgent_patched.py — Oracle Forge patched version of DAB's DataAgent.
+
+Changes from original DataAgentBench/common_scaffold/DataAgent.py:
+- Added OpenRouter routing: model names starting with google/, anthropic/, openai/,
+  meta-llama/, or containing 'openrouter' are routed to https://openrouter.ai/api/v1
+  using OPENROUTER_API_KEY from .env (instructor-approved API).
+- This file is the reference copy. The live version on the server is applied directly
+  to DataAgentBench/common_scaffold/DataAgent.py.
+"""
 import os
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))

@@ -11,6 +11,7 @@ from pathlib import Path
 from datetime import datetime
 
 DAB_PATH = Path(__file__).parent.parent / "DataAgentBench"
+ORACLE_RUN = Path(__file__).parent.parent / "agent" / "oracle_run.py"
 SCORE_LOG = Path(__file__).parent / "score_log.jsonl"
 sys.path.insert(0, str(DAB_PATH))
 
@@ -41,11 +42,10 @@ def run_harness(dataset: str, query_ids: list[int], llm: str, iterations: int = 
     print(f"Dataset: {dataset} | Model: {llm} | Queries: {query_ids}")
     print(f"{'='*60}\n")
 
-    # Run agent on each query
-    os.chdir(DAB_PATH)
+    # Run agent on each query via oracle_run.py (includes KB injection)
     for qid in query_ids:
         print(f"Running query {qid}...")
-        os.system(f"cd {DAB_PATH} && source .venv/bin/activate && python run_agent.py --dataset {dataset} --query_id {qid} --llm {llm} --iterations {iterations} --root_name harness_run")
+        os.system(f"cd {DAB_PATH} && source .venv/bin/activate && python {ORACLE_RUN} --dataset {dataset} --query_id {qid} --llm {llm} --iterations {iterations} --root_name harness_run")
 
     # Collect and validate results
     results = []
