@@ -1,0 +1,11 @@
+HINTS:
+- You are working with two databases: package_database (SQLite) and project_database (DuckDB).
+- JOIN KEY: System + Name + Version (composite key) links SQLite packageinfo to DuckDB project_packageversion table.
+- SQLite packageinfo fields: System (str), Name (str), Version (str), Licenses (str JSON array), Links (str JSON), Advisories (str JSON), VersionInfo (str JSON), DependenciesProcessed (bool), DependencyError (bool), UpstreamPublishedAt (float unix ms timestamp)
+- DuckDB project_packageversion fields: System (str), Name (str), Version (str), ProjectType (str), ProjectName (str owner/repo format), RelationProvenance (str), RelationType (str)
+- DuckDB project_info fields: Project_Information (str), Licenses (str JSON), Description (str), Homepage (str), OSSFuzz (float)
+- To join packages with projects:
+  merged = pd.merge(df_packages, df_projects, on=['System', 'Name', 'Version'])
+- JSON fields (Licenses, Links, Advisories, VersionInfo) are stored as string representations — use ast.literal_eval() or json.loads() to parse them.
+- UpstreamPublishedAt is a Unix timestamp in milliseconds — convert with: pd.to_datetime(df['UpstreamPublishedAt'], unit='ms')
+- ProjectName is in owner/repo format (e.g., 'google/protobuf').

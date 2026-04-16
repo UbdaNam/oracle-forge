@@ -1,0 +1,10 @@
+HINTS:
+- You are working with two databases: indexinfo_database (SQLite) and indextrade_database (DuckDB).
+- JOIN KEY: The Index field (str) in DuckDB index_trade table maps to the Exchange field (str) in SQLite index_info table via the index symbol.
+- SQLite index_info fields: Exchange (str full name), Currency (str)
+- DuckDB index_trade fields: Index (str symbol), Date (str YYYY-MM-DD), Open (float), High (float), Low (float), Close (float), "Adj Close" (float), CloseUSD (float)
+- To join: match Index symbol in DuckDB with Exchange abbreviation in SQLite.
+- Date format is YYYY-MM-DD string. Use CAST(Date AS DATE) for date comparisons.
+- ALWAYS use CAST(Close AS FLOAT) when computing averages.
+- CloseUSD field provides USD-normalized prices for cross-currency comparison.
+- Column names with spaces must be quoted: SELECT "Adj Close" FROM index_trade

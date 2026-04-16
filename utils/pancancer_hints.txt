@@ -1,0 +1,14 @@
+HINTS:
+- You are working with two databases: clinical_database (PostgreSQL) and molecular_database (SQLite).
+- JOIN KEY: ParticipantBarcode (str) links PostgreSQL clinical_info to SQLite Mutation_Data and RNASeq_Expression tables.
+- PostgreSQL clinical_info: 100+ fields including patient demographics, cancer type (cancer_type_acronym), survival status, treatment outcomes. Use list_db to see all columns.
+- SQLite Mutation_Data fields: ParticipantBarcode (str), Hugo_Symbol (str gene name), Variant_Classification (str), HGVSp_Short (str), FILTER (str — use 'PASS' for reliable mutations)
+- SQLite RNASeq_Expression fields: ParticipantBarcode (str), Symbol (str gene name), normalized_count (float RNA expression level)
+- To join clinical with molecular data:
+  df_clinical['id'] = df_clinical['ParticipantBarcode']  (check exact column name with list_db)
+  df_molecular['id'] = df_molecular['ParticipantBarcode']
+  merged = pd.merge(df_clinical, df_molecular, on='id')
+- Filter mutations by FILTER = 'PASS' for high-confidence calls only.
+- cancer_type_acronym in clinical_info uses standard TCGA codes (e.g., BRCA=breast cancer, LUAD=lung adenocarcinoma).
+- ALWAYS use CAST(normalized_count AS FLOAT) when computing expression averages.
+- PostgreSQL column names may be lowercase — use double quotes if needed.

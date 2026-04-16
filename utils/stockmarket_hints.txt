@@ -1,0 +1,11 @@
+HINTS:
+- You are working with two databases: stockinfo_database (SQLite) and stocktrade_database (DuckDB).
+- JOIN KEY: Symbol (str) in SQLite stockinfo table maps to the TABLE NAME in DuckDB. Each stock has its own table named after its ticker symbol (e.g., table "AAPL" for Apple).
+- To query a specific stock's price data: SELECT * FROM "SYMBOL" in DuckDB where SYMBOL is the ticker.
+- To list all available stock tables in DuckDB: use list_db tool on stocktrade_database.
+- SQLite stockinfo fields: Symbol (str), "Company Description" (str), "Market Category" (str), ETF (str), "Listing Exchange" (str), "Financial Status" (str)
+- DuckDB per-stock table fields: Date (str), Open (float), High (float), Low (float), Close (float), "Adj Close" (float), Volume (int)
+- Date format in DuckDB is YYYY-MM-DD string. Use CAST(Date AS DATE) for date comparisons.
+- Column names with spaces must be quoted: SELECT "Adj Close" FROM "AAPL"
+- ALWAYS use CAST(Close AS FLOAT) or CAST("Adj Close" AS FLOAT) when computing averages — numeric columns may need explicit casting.
+- To find top performing stocks: query multiple ticker tables and compare Close prices.

@@ -1,0 +1,12 @@
+HINTS:
+- You are working with two databases: tracks_database (SQLite) and sales_database (DuckDB).
+- JOIN KEY: track_id (int) in SQLite tracks table maps directly to track_id (int) in DuckDB sales table. Same type, no conversion needed.
+- SQLite tracks fields: track_id (int), source_id (int), source_track_id (str), title (str), artist (str), album (str), year (str), length (str), language (str)
+- DuckDB sales fields: sale_id (int), track_id (int), country (str), store (str), units_sold (int), revenue_usd (double)
+- To join in execute_python:
+  df_tracks['id'] = df_tracks['track_id']
+  df_sales['id'] = df_sales['track_id']
+  merged = pd.merge(df_sales, df_tracks, on='id')
+- ALWAYS use CAST(revenue_usd AS FLOAT) when computing averages.
+- The tracks table may contain duplicates from different sources — use DISTINCT or GROUP BY track_id when counting unique tracks.
+- year field is stored as string — use CAST(year AS INT) for numeric comparisons.

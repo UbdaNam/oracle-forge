@@ -1,0 +1,17 @@
+HINTS:
+- You are working with SIX databases: core_crm (SQLite), sales_pipeline (DuckDB), support (PostgreSQL), products_orders (SQLite), activities (DuckDB), territory (SQLite).
+- PRIMARY JOIN KEYS:
+  - AccountId links: core_crm.Account.Id → sales_pipeline.Opportunity.AccountId → support.Case.accountid → products_orders.Order.AccountId
+  - ContactId links: core_crm.Contact.Id → sales_pipeline.Opportunity.ContactId → support.Case.contactid
+  - OpportunityId links: sales_pipeline.Opportunity.Id → sales_pipeline.OpportunityLineItem.OpportunityId → sales_pipeline.Quote.OpportunityId → activities.VoiceCallTranscript__c.OpportunityId__c
+  - Product2Id links: products_orders.Product2.Id → sales_pipeline.OpportunityLineItem.Product2Id → products_orders.PricebookEntry.Product2Id
+  - OwnerId links: core_crm.User.Id → sales_pipeline.Opportunity.OwnerId → activities.Task.OwnerId
+- All IDs are Salesforce-style string IDs (18-char alphanumeric). No prefix conversion needed.
+- PostgreSQL support table uses lowercase field names (id, accountid, contactid, caseid).
+- DuckDB sales_pipeline uses mixed case (Id, AccountId, OwnerId).
+- SQLite tables use mixed case (Id, AccountId, ContactId).
+- When joining across databases, always normalize ID case: df['id'] = df['Id'].str.lower() if needed.
+- support.Case.description and livechattranscript.body contain unstructured text — use str.contains() for keyword search.
+- activities.VoiceCallTranscript__c.Body__c contains call transcript text — use text search for sentiment/topic analysis.
+- ALWAYS use CAST(Amount AS FLOAT) for Opportunity.Amount and CAST(TotalPrice AS FLOAT) for order totals.
+- Date fields: CreatedDate, CloseDate, ActivityDate are stored as strings — use CAST(CreatedDate AS DATE) for comparisons.

@@ -1,0 +1,14 @@
+HINTS:
+- You are working with two databases: articles_database (MongoDB) and metadata_database (SQLite).
+- JOIN KEY: article_id (int) in MongoDB articles collection maps directly to article_id (int) in SQLite article_metadata table. Same type, no conversion needed.
+- To join MongoDB articles with SQLite metadata in execute_python:
+  df_articles['id'] = df_articles['article_id']
+  df_metadata['id'] = df_metadata['article_id']
+  merged = pd.merge(df_articles, df_metadata, on='id')
+- MongoDB articles collection fields: article_id (int), title (str), description (str)
+- SQLite article_metadata fields: article_id (int), author_id (int), region (str), publication_date (str format YYYY-MM-DD)
+- SQLite authors fields: author_id (int), name (str)
+- To filter by date range use: WHERE publication_date BETWEEN 'YYYY-MM-DD' AND 'YYYY-MM-DD'
+- To filter by region use: WHERE region = 'region_name'
+- Always set MongoDB query limit to 10000 to get ALL documents.
+- When computing counts or aggregations, always join all relevant tables first.

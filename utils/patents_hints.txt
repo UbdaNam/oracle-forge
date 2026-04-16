@@ -1,0 +1,12 @@
+HINTS:
+- You are working with two databases: publication_database (SQLite) and CPCDefinition_database (PostgreSQL).
+- JOIN KEY: CPC codes link SQLite publicationinfo.cpc (JSON list of CPC entries) to PostgreSQL cpc_definition.symbol (str).
+- SQLite publicationinfo fields: Patents_info (str summary), title_localized (str), abstract_localized (str), publication_date (str natural language e.g. "March 15th, 2020"), filing_date (str), grant_date (str), inventor_harmonized (str), cpc (str JSON list of CPC codes), citation (str), entity_status (str)
+- PostgreSQL cpc_definition fields: symbol (str CPC code), titleFull (str), definition (str), level (int 1-5), status (str active/deleted), parents (str JSON), children (str JSON)
+- Date fields are stored as natural language strings (e.g., "March 15th, 2020") — use string parsing or regex to extract year/month.
+- cpc field in publicationinfo is a JSON-like string — use json.loads() or ast.literal_eval() to parse CPC code list.
+- To find patents by CPC code: parse cpc field and match against cpc_definition.symbol.
+- abstract_localized and description_localized_html contain full text — use str.contains() for keyword search.
+- entity_status values: "small entity", "large entity", "micro entity".
+- PostgreSQL cpc_definition column names are camelCase — use exact names as listed.
+- ALWAYS set query limits when fetching from publicationinfo — it is a large table (5GB file).

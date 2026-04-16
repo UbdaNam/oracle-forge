@@ -1,0 +1,14 @@
+HINTS:
+- You are working with two databases: metadata_database (SQLite) and artifacts_database (DuckDB).
+- JOIN KEY: repo_name (str in owner/repo format) links all tables across both databases.
+- SQLite tables: languages (repo_name, language_description), licenses (repo_name, license), repos (repo_name, watch_count)
+- DuckDB tables: contents (id, content, sample_repo_name, sample_path, ...), commits (commit SHA, repo_name, subject, message, author JSON, difference JSON), files (repo_name, path, mode, id)
+- To join metadata with artifacts:
+  df_meta['repo'] = df_meta['repo_name']
+  df_artifacts['repo'] = df_artifacts['repo_name']  # or sample_repo_name for contents
+  merged = pd.merge(df_meta, df_artifacts, on='repo')
+- author field in commits is a JSON string — parse with json.loads() to get name, email, timestamp.
+- difference field in commits is a JSON string representing file changes.
+- content field in contents may be truncated for large/binary files.
+- language_description is a natural language string (e.g., "Python, JavaScript") not a structured field.
+- Always set query limits when fetching from large DuckDB tables (contents, commits can be very large).
