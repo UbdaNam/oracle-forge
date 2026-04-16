@@ -79,7 +79,8 @@ A: OpenRouter API rate limits. EC2 server uptime.
 - [x] `write_correction()` writes structured entries with no ground truth values
 - [x] Duplicate detection: same dataset+query+pattern skipped
 - [x] Tested: PASS — no ground truth values in generated corrections
-- [x] bookreview Q2 + Q3 passing (PostgreSQL + SQLite confirmed working)
+- [x] bookreview Q2 passing (PostgreSQL + SQLite confirmed working)
+- [ ] bookreview Q3 failing — agent returns partial book list, misses required title
 - [x] Combined score: 4/10 = 40% pass@1 (Yelp + bookreview)
 - [x] Score logged to `eval/score_log.jsonl`
 - [x] All code pushed to GitHub and synced to server
