@@ -73,6 +73,7 @@ User Natural Language Query
 - `agent/kb_injector.py` — injects all 3 context layers at session start (16,044 chars)
 - `agent/tools.yaml` — MCP Toolbox config for all 4 database types
 - OpenRouter integration — Claude, GPT-4o, Gemini via single API key
+- `agent/AGENT.md` — agent context file loaded at session start
 
 **Evaluation Harness**
 
@@ -140,14 +141,15 @@ Initial testing used direct Gemini API (`generativelanguage.googleapis.com`).
 
 After discussion with instructors, switched to OpenRouter for model flexibility and to avoid single-provider dependency.
 
-| Run   | Date     | Model                                        | Score           | Notes                                   |
-| ----- | -------- | -------------------------------------------- | --------------- | --------------------------------------- |
-| Run 4 | April 15 | google/gemini-3.1-pro-preview via OpenRouter | 2/7 = **28.6%** | Proxy behavior differs from direct API  |
-| Run 5 | April 15 | google/gemini-3.1-pro-preview via OpenRouter + CAST fix      | In progress     | BIGINT bug fixed, best OpenRouter model |
+| Run | Date | Model | Datasets | Score | Notes |
+|-----|------|-------|----------|-------|-------|
+| Run 4 | April 15 | google/gemini-3.1-pro-preview via OpenRouter | Yelp | 2/7 = **28.6%** | Proxy behavior differs from direct API |
+| Run 5 | April 15 | google/gemini-3.1-pro-preview via OpenRouter + CAST fix | Yelp | 2/7 = **28.6%** | BIGINT bug fixed |
+| Run 6 | April 15 | google/gemini-3.1-pro-preview via OpenRouter + KB injection | Yelp + bookreview | 4/10 = **40.0%** ✅ | Beats 38% DAB baseline |
 
-**Key insight:** Same model (`gemini-3.1-pro-preview`) scores differently via OpenRouter proxy vs direct Gemini API. gemini-3.1-pro-preview via OpenRouter performs better than Gemini via OpenRouter for tool-calling tasks.
+**Key insight:** Best confirmed score is 57.1% via direct Gemini API. Via OpenRouter, 40% across 2 datasets (Yelp + bookreview) beats the 38% frontier model baseline.
 
-**Score improvement:** 0% → 57.1% (direct Gemini) → improving with GPT-4o + CAST fix on OpenRouter
+**Score improvement:** 0% → 57.1% (direct Gemini) | OpenRouter best: **40%** across 2 datasets ✅ beats baseline
 
 ---
 
@@ -166,8 +168,7 @@ Oracle Forge follows the AWS AI-DLC framework — Inception → Construction →
 **Interim milestone (April 14) — all 7 items met ✅**
 
 **What changed from plan during Construction:**
-
-- LLM switched from Gemini to gemini-3.1-pro-preview via OpenRouter — Gemini daily quota too restrictive
+- Switched to OpenRouter after instructor discussion — avoids single-provider dependency
 - Two critical bugs found and fixed: BIGINT CAST + MongoDB query limit
 - KB injection wired into agent ahead of schedule
 
@@ -193,7 +194,7 @@ Documented in `planning/inception_sprint2.md` — pending team approval at next 
 | Task                                   | Owner                 | Status               |
 | -------------------------------------- | --------------------- | -------------------- |
 | Fix Q2, Q3, Q4, Q7 failures            | Driver                | 🔄 In progress       |
-| Run all 12 datasets                    | Driver                | ❌                   |
+| Run all 12 datasets                    | Driver                | 🔄 2/12 done (Yelp + bookreview) |
 | Adversarial probe library (15+ probes) | Driver + IOs          | ❌                   |
 | KB v3 corrections                      | Intelligence Officers | ✅ Nebiyou committed |
 | 50 trials per query for submission     | Driver                | ❌                   |
@@ -201,6 +202,17 @@ Documented in `planning/inception_sprint2.md` — pending team approval at next 
 | Signal Corps articles published        | Signal Corps          | ❌                   |
 | Demo video (max 8 min)                 | All                   | ❌                   |
 | AI-DLC Operations document             | Driver                | ❌                   |
+
+---
+
+## Agent Trial-and-Error Control
+
+Three controls prevent excessive runtime and hallucinations:
+1. **Hard iteration cap** — `--iterations 15` is a hard ceiling per query
+2. **Corrections log injected at session start** — agent reads past failures before answering, doesn't repeat known mistakes
+3. **Hints file as guardrails** — explicit join key patterns, CAST requirements, no-limit MongoDB per dataset
+
+Failure detection is currently manual — Driver reads logs, diagnoses, writes correction. Automating this is a Sprint 2 stretch goal.
 
 ---
 

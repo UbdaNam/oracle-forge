@@ -30,7 +30,7 @@ documented for the research community.
 A: Sprint 1 proved the approach on Yelp (7 queries, 57.1% pass@1). Sprint 2 runs all 54
 queries across 12 datasets and submits to the public DAB leaderboard.
 
-**Q: Will the score be higher than 57.1%?**
+**Q: Will the score be higher than 28.1%?**
 A: On Yelp yes — we fixed the BIGINT CAST bug and MongoDB limit bug. Across all 54 queries
 the score will likely be lower (20-35%) because other datasets need their own hints files
 and we haven't tuned them yet.
@@ -77,7 +77,7 @@ Every new failure found in Sprint 2 gets:
 
 | Decision | Choice | Reason |
 |----------|--------|--------|
-| LLM | google/gemini-3.1-pro-preview via OpenRouter | Best accuracy confirmed in Sprint 1 (57.1% on Yelp) |
+| LLM | google/gemini-3.1-pro-preview via OpenRouter | Best accuracy confirmed in Sprint 1 (28.1% on Yelp) |
 | Trials per query | 50 | DAB leaderboard requirement |
 | Dataset priority | Yelp → bookreview → googlelocal → agnews → stockmarket → rest | Start with confirmed working, expand |
 | Submission format | DAB GitHub PR | Required by benchmark |
