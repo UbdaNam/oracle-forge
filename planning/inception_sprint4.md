@@ -1,4 +1,5 @@
 # AI-DLC Inception Document — Sprint 4
+
 **Team:** BLOOM | **Driver:** Amir Ahmedin | **Sprint Date:** 2026-04-16
 **Focus:** Live self-correction harness, bookreview dataset, 40% combined pass@1
 
@@ -62,20 +63,30 @@ A: OpenRouter API rate limits. EC2 server uptime.
 
 ## 5. Key Decisions
 
-| Decision | Choice | Reason |
-|---|---|---|
-| Self-correction trigger | After every failed query in harness | Immediate — corrections available for next run |
-| Ground truth isolation | Diagnose from tool_calls.jsonl only | Validate.py output and answer text are never written to corrections |
-| Duplicate detection | Skip if same dataset+query+pattern already exists | Prevents corrections.md from growing with redundant entries |
-| Venv fix | `subprocess.run` with direct venv python path | `os.system` with `source .venv/bin/activate` silently failed |
-| Default iterations | 20 | 10 was insufficient; 20 confirmed working in Sprint 3 |
+| Decision                | Choice                                            | Reason                                                              |
+| ----------------------- | ------------------------------------------------- | ------------------------------------------------------------------- |
+| Self-correction trigger | After every failed query in harness               | Immediate — corrections available for next run                      |
+| Ground truth isolation  | Diagnose from tool_calls.jsonl only               | Validate.py output and answer text are never written to corrections |
+| Duplicate detection     | Skip if same dataset+query+pattern already exists | Prevents corrections.md from growing with redundant entries         |
+| Venv fix                | `subprocess.run` with direct venv python path     | `os.system` with `source .venv/bin/activate` silently failed        |
+| Default iterations      | 20                                                | 10 was insufficient; 20 confirmed working in Sprint 3               |
 
 ---
 
 ## 6. Definition of Done — April 16
 
 - [x] Harness rewritten: `subprocess.run` with venv python, `--use_hints` always passed
-- [x] `diagnose_failure()` classifies 7 failure patterns from tool call logs only
+- [x] `diagnose_failure()` classifies 10 failure patterns from tool call logs only:
+  1. NaN/NameError in execute_python
+  2. TypeError — integer index used on dict result
+  3. KeyError — wrong field name used
+  4. SyntaxError in generated Python code
+  5. max_iterations — no tool errors recorded
+  6. Wrong category field used
+  7. Incorrect numeric computation
+  8. Required entity name missing from answer
+  9. Agent made no tool calls
+  10. Answer returned but failed validation
 - [x] `write_correction()` writes structured entries with no ground truth values
 - [x] Duplicate detection: same dataset+query+pattern skipped
 - [x] Tested: PASS — no ground truth values in generated corrections
@@ -89,13 +100,13 @@ A: OpenRouter API rate limits. EC2 server uptime.
 
 ## 7. Mob Session Approval Record
 
-| Date | Approved by | Role | Hardest question asked | Answer |
-|---|---|---|---|---|
-| 2026-04-16 | Amir Ahmedin | Driver | Does the self-correction loop leak ground truth into the KB? | No. Tested explicitly — checked corrections.md for known ground truth values (PA, 3.55, 35, Restaurant, 2020, Benny Goes). None found. Diagnosis reads tool_calls.jsonl only. |
-| 2026-04-16 | Nebiyou Abebe | Intelligence Officer | What happens if the tool call log is empty — does the correction still help? | It falls back to a generic pattern (max_iterations — no tool errors recorded) with advice to increase iterations and add hints. Not ideal but not harmful. |
-| 2026-04-16 | Ruth Solomon | Intelligence Officer | bookreview Q1 and Q3 are still failing — what is the root cause? | Q1 hits max_iterations — PostgreSQL schema loading takes too many iterations. Q3 returns wrong book title — agent queries wrong field. Both will get auto-corrections on next run. |
-| 2026-04-16 | Abdurahim Miftah | Signal Corps | Can we say the agent learns from its mistakes? | Yes, accurately. The corrections log grows with every harness run. The next run injects those corrections. The score improvement from 28.6% to 57.1% was caused by exactly this mechanism. |
-| 2026-04-16 | Efrata Wolde | Signal Corps | Is 40% across two datasets a meaningful result to post about? | Yes — it beats the 38% DAB baseline across two different database type combinations. That is the claim: the architecture generalises. |
+| Date       | Approved by      | Role                 | Hardest question asked                                                       | Answer                                                                                                                                                                                     |
+| ---------- | ---------------- | -------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-04-16 | Amir Ahmedin     | Driver               | Does the self-correction loop leak ground truth into the KB?                 | No. Tested explicitly — checked corrections.md for known ground truth values (PA, 3.55, 35, Restaurant, 2020, Benny Goes). None found. Diagnosis reads tool_calls.jsonl only.              |
+| 2026-04-16 | Nebiyou Abebe    | Intelligence Officer | What happens if the tool call log is empty — does the correction still help? | It falls back to a generic pattern (max_iterations — no tool errors recorded) with advice to increase iterations and add hints. Not ideal but not harmful.                                 |
+| 2026-04-16 | Ruth Solomon     | Intelligence Officer | bookreview Q1 and Q3 are still failing — what is the root cause?             | Q1 hits max_iterations — PostgreSQL schema loading takes too many iterations. Q3 returns wrong book title — agent queries wrong field. Both will get auto-corrections on next run.         |
+| 2026-04-16 | Abdurahim Miftah | Signal Corps         | Can we say the agent learns from its mistakes?                               | Yes, accurately. The corrections log grows with every harness run. The next run injects those corrections. The score improvement from 28.6% to 57.1% was caused by exactly this mechanism. |
+| 2026-04-16 | Efrata Wolde     | Signal Corps         | Is 40% across two datasets a meaningful result to post about?                | Yes — it beats the 38% DAB baseline across two different database type combinations. That is the claim: the architecture generalises.                                                      |
 
 **Status:** ✅ APPROVED — All team members approved on 2026-04-16.
 
