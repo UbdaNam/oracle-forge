@@ -18,6 +18,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 DAB_PATH = Path(__file__).parent.parent / "DataAgentBench"
+# Server has DataAgentBench at ~/DataAgentBench (sibling of oracle-forge)
+# Fall back to that location if the relative path doesn't exist
+if not DAB_PATH.exists():
+    DAB_PATH = Path.home() / "DataAgentBench"
 ORACLE_RUN = Path(__file__).parent.parent / "agent" / "oracle_run.py"
 SCORE_LOG = Path(__file__).parent / "score_log.jsonl"
 CORRECTIONS = Path(__file__).parent.parent / "kb" / "corrections" / "corrections.md"
