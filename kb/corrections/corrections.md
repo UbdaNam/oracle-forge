@@ -102,19 +102,36 @@ Agent misclassifies non-sports articles as sports when searching for the longest
 ## Correction 005 — 2026-04-17 [AUTO]
 
 **Dataset:** bookreview | **Query ID:** 1
-**Failure pattern:** KeyError — wrong field name used
+**Failure pattern:** Multiple execute_python errors cycling
 
 **What was wrong:**
-bookreview Q1: agent hit max_iterations. execute_python failed with KeyError — agent referenced a field that does not exist in the result.
+bookreview Q1: agent hit max_iterations cycling through four errors:
+- `NameError: name 'var_call' is not defined` — agent references a result variable that was never stored
+- `ValueError: DataFrame constructor not properly called` — agent passes wrong type to pd.DataFrame()
+- `TypeError: expected str, bytes or os.PathLike object, not list` — agent passes list to open()
+- `AttributeError: 'Series' object has no attribute 'value_collapse'` — agent calls non-existent pandas method
 
 **Correct approach:**
-Always call list_db first to inspect available fields. Print df.columns after creating the DataFrame to verify field names. Field names differ between databases — check db_description for exact names.
+- Always use the exact key name returned in the tool result message, not a guessed name like `var_call`
+- Check available keys with `print(list(env.keys()))` before referencing stored results
+- Always pass a list of dicts to `pd.DataFrame()`: `pd.DataFrame(records)` where records is the query result
+- Use `df.value_counts()` not `df.value_collapse()` — the correct pandas method is `value_counts()`
+- When a stored result is a file path (string ending in .json), read it with `json.load(open(path))`
 
 **Example:**
-```
-import pandas as pd
-df = pd.DataFrame(records)
-print(df.columns.tolist())  # inspect before accessing
+```python
+import pandas as pd, json
+# Check what keys are available
+print(list(env.keys()))
+# Read stored result correctly
+result = env.get('var_KEYNAME')  # use exact key from tool result
+if isinstance(result, str) and result.endswith('.json'):
+    data = json.load(open(result))
+else:
+    data = result
+df = pd.DataFrame(data)  # data must be list of dicts
+print(df.columns.tolist())  # verify columns before use
+counts = df['column'].value_counts()  # not value_collapse
 ```
 
 ---
@@ -137,3 +154,126 @@ import pandas as pd
 df = pd.DataFrame(records)
 print(df.columns.tolist())  # confirm 'name' or 'title' field exists
 ```
+
+---
+
+## Correction 007 — 2026-04-17 [AUTO]
+
+**Dataset:** yelp | **Query ID:** 2
+**Failure pattern:** Required entity name missing from answer
+
+**What was wrong:**
+yelp Q2: agent returned an answer but a required entity name or identifier was absent — likely queried the wrong field or database.
+
+**Correct approach:**
+Verify which database and field holds the entity name for this dataset. Use list_db to inspect available collections and tables before querying. For Yelp: business names are in MongoDB business collection 'name' field. For bookreview: book titles are in PostgreSQL books_info 'title' field.
+
+**Example:**
+```
+# Always verify field existence before selecting
+import pandas as pd
+df = pd.DataFrame(records)
+print(df.columns.tolist())  # confirm 'name' or 'title' field exists
+```
+
+---
+
+## Correction 008 — 2026-04-17 [AUTO]
+
+**Dataset:** yelp | **Query ID:** 3
+**Failure pattern:** Incorrect numeric computation
+
+**What was wrong:**
+yelp Q3: agent returned a numeric answer but the value was computed incorrectly — likely due to integer truncation or incomplete data.
+
+**Correct approach:**
+Always CAST numeric columns to FLOAT before computing AVG in DuckDB: AVG(CAST(column AS FLOAT)). Always set MongoDB query limit to 10000 to avoid missing documents. Verify join key normalisation: strip prefixes before merging DataFrames.
+
+**Example:**
+```
+-- DuckDB: cast before averaging
+SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
+
+-- MongoDB: always set explicit limit
+{"collection": "business", "filter": {}, "limit": 10000}
+```
+
+---
+
+## Correction 009 — 2026-04-17 [AUTO]
+
+**Dataset:** yelp | **Query ID:** 4
+**Failure pattern:** Wrong category field used
+
+**What was wrong:**
+yelp Q4: agent returned an answer but the category field was sourced from the wrong table or collection.
+
+**Correct approach:**
+In Yelp, business categories are stored in the MongoDB business collection as a list in the 'categories' field — not in DuckDB. Explode the list before counting. Do not use DuckDB category fields — they may be stale or differently formatted.
+
+**Example:**
+```
+import pandas as pd
+# MongoDB business categories field is a list
+df['categories'] = df['categories'].apply(
+    lambda x: x if isinstance(x, list) else []
+)
+all_cats = df.explode('categories')['categories'].value_counts()
+```
+
+---
+
+## Correction 010 — 2026-04-17 [AUTO]
+
+**Dataset:** yelp | **Query ID:** 5
+**Failure pattern:** NaN/NameError in execute_python
+
+**What was wrong:**
+yelp Q5: agent hit max_iterations. execute_python failed repeatedly with NameError — bare `nan` used instead of a valid null representation.
+
+**Correct approach:**
+Never use bare `nan` in execute_python. Use `float('nan')`, `pd.NA`, or `np.nan` (after importing numpy). Always add `import numpy as np` before using np.nan.
+
+**Example:**
+```
+import numpy as np
+import pandas as pd
+# correct null handling
+df = df.replace(float('nan'), np.nan)
+df = df.dropna(subset=['required_column'])
+```
+
+---
+
+## Correction 011 — 2026-04-17 [AUTO]
+
+**Dataset:** yelp | **Query ID:** 7
+**Failure pattern:** TypeError — integer index used on dict result
+
+**What was wrong:**
+yelp Q7: agent hit max_iterations. execute_python failed with TypeError — agent accessed a list-of-dicts result using integer indices instead of field names.
+
+**Correct approach:**
+Always wrap tool results in pd.DataFrame() before field access. Use df['field_name'] not result[0]. Check result type with type(result) before processing.
+
+**Example:**
+```
+import pandas as pd
+# records is a list of dicts from query_db
+df = pd.DataFrame(records)
+# now access fields by name
+value = df['field_name']
+```
+
+---
+
+## Correction 012 — 2026-04-17 [AUTO]
+
+**Dataset:** yelp | **Query ID:** 7
+**Failure pattern:** max_iterations — no tool errors recorded
+
+**What was wrong:**
+yelp Q7: agent hit max_iterations with no recorded tool errors. The agent may have been looping on query reformulation without making progress.
+
+**Correct approach:**
+Increase --iterations to 30. Add dataset-specific hints to db_description_withhint.txt to guide the first query. Check that the correct database type is being queried for this dataset.
