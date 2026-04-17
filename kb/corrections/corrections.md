@@ -67,52 +67,35 @@ Fix: always check type before passing to open() — use json.dumps() if result i
 **Queries affected:** Q1, Q2, Q4, Q5 (Yelp dataset) — any query computing AVG(rating)
 
 **What was wrong:**
-The `rating` column in DuckDB `review` table is stored as `BIGINT`. Using `AVG(rating)` directly on a BIGINT column returns an integer-truncated result. For example, Q1 returned `3.86` instead of `3.547` because the average was computed incorrectly.
+The `rating` column in DuckDB `review` table is stored as `BIGINT`. Using `AVG(rating)` directly on a BIGINT column returns an integer-truncated result — the computed average is wrong.
 
-Additionally, MongoDB queries were hitting a default limit of 5 documents, causing the agent to miss 3 of 8 Indianapolis businesses.
+Additionally, MongoDB queries were hitting a default limit of 5 documents, causing the agent to miss businesses that should be included in the calculation.
 
 **Correct approach:**
 1. Always use `CAST(rating AS FLOAT)` or `CAST(rating AS DOUBLE)` when computing averages:
    ```sql
    SELECT AVG(CAST(rating AS FLOAT)) FROM review WHERE business_ref IN (...)
    ```
-2. Always set MongoDB query limit to 0 or 10000 to get ALL matching documents:
+2. Always set MongoDB query limit to 10000 to get ALL matching documents:
    ```json
    {"collection": "business", "filter": {...}, "limit": 10000}
    ```
-
-**Evidence:**
-- 5 refs (with limit): AVG = 3.86 ❌
-- 8 refs (no limit) + CAST: AVG = 3.547 ✅
 
 ---
 
 ## Correction 004 — 2026-04-17
 
-**Query:** "What is the title of the sports article whose description has the greatest number of characters?"
 **Dataset:** agnews | **Query ID:** 1
 
 **What was wrong:**
-Agent consistently returns "THECHAT" or "Product Previews" instead of "The Rundown". The agent fetches articles and tries to find the longest description but misclassifies non-sports articles as sports.
-
-**Root cause:**
-There is no category field in the agnews database. The agent must classify articles as sports/non-sports by reading title and description content. The agent's keyword-based classification is too broad — words like "game", "team", "match" appear in tech and business articles too.
+Agent misclassifies non-sports articles as sports when searching for the longest description. There is no category field in the agnews database — the agent must classify articles by reading title and description content. Keyword-based classification is too broad — words like "game", "team", "match" appear in tech and business articles too.
 
 **Correct approach:**
-The ground truth answer is "The Rundown" (article_id 69413, description length 841 chars). This is a college football preview article. To find it correctly:
-1. Fetch ALL articles from MongoDB (127,600 documents)
-2. In execute_python, use a strict sports classification — look for football/basketball/baseball/soccer/tennis/golf/Olympics/NFL/NBA/MLB/NHL/college sports terms in BOTH title AND description
-3. Exclude articles where title contains tech/business keywords (Microsoft, IBM, software, stock, market, company)
-4. Find max len(description) among remaining sports articles
-
-**Known wrong answers to avoid:**
-- "THECHAT" — this is a chat/tech article, not sports
-- "Product Previews" — this is a tech/business article, not sports
-- "IBM to market Sybase Linux database" — tech article, not sports
-- "Kyoto is Dead - Long Live Pragmatism" — politics article, not sports
-
-**Classification hint:**
-Sports articles in AG News typically contain: team names (e.g., "Miami", "N.C. State", "Auburn"), player names, game scores, sports venues, and sports-specific terms like "quarterback", "innings", "playoff", "ACC", "SEC", "touchdown".
+1. Fetch ALL articles from the database — do not filter before classification
+2. Use strict sports classification — require sports-specific terms in BOTH title AND description: football, basketball, baseball, soccer, tennis, golf, Olympics, NFL, NBA, MLB, NHL, playoff, quarterback, innings, touchdown, and specific league/conference names
+3. Exclude articles where the title contains clear non-sports signals: software, stock, market, company names, political terms
+4. Among classified sports articles, find the one with the maximum `len(description)`
+5. Return only the article title — not the description or length
 
 ---
 
