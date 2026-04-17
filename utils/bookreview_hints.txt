@@ -15,6 +15,10 @@ HINTS:
   int(result) not result directly — numpy int64 is not JSON serializable
   float(result) not result directly — numpy float64 is not JSON serializable
 - Variable keys in execute_python must match exactly what was stored. Always check available keys with: print(list(env.keys()))
+- Never reference a result key directly by name (e.g. var_call-1). Always use the key returned in the tool result message.
+- When constructing a DataFrame, always pass a list of dicts or a dict of lists. Never pass a raw string or scalar:
+  CORRECT: pd.DataFrame(records)  where records is a list of dicts
+  WRONG:   pd.DataFrame('some string')
 - When returning a category name and number together, keep them within 50 characters of each other in the answer.
 - When processing tool results in execute_python, always wrap results in pd.DataFrame() before accessing fields.
 - For decade-based queries: extract decade from publication year as: df['decade'] = (df['year'] // 10 * 10).astype(str) + 's'
