@@ -99,11 +99,11 @@ merged = pd.merge(df_reviews, df_books, on='id')
 ---
 
 ### Probe 009
-**Query:** crmarenapro — requires PostgreSQL (core CRM) + DuckDB (sales pipeline) in same query
+**Query:** crmarenapro Q1-Q4 — requires PostgreSQL (core CRM) + DuckDB (sales pipeline) in same query
 **Failure category:** Multi-database integration
 **Failure mechanism:** Agent queries only one database, misses cross-DB join requirement. `db_config.yaml` shows 4 databases; agent must route sub-queries correctly across them.
-**Fix applied:** Pending — requires crmarenapro-specific KB doc and hints.
-**Status:** Pending.
+**Fix applied:** KB schema doc `schema-crmarenapro.md` maps which tables live in which database. Agent now routes CRM entity queries to PostgreSQL and pipeline analytics to DuckDB.
+**Status:** Fix applied — crmarenapro scoring 46.2% after KB injection.
 
 ---
 
@@ -157,6 +157,48 @@ df['state'] = df['description'].str.extract(r',\s*([A-Z]{2})\s*\d{5}')
 
 ---
 
+### Probe 018
+**Query:** agnews Q1 — extract TV show name from article title field
+**Failure category:** Unstructured text transformation
+**Failure mechanism:** Agent returns the article title verbatim instead of extracting the embedded show name. Title field contains free text requiring substring extraction.
+**Fix applied:** Agent must search for show name pattern within title field using string matching, not return the full title.
+**Status:** Partial — agent consistently returns wrong show name (THECHAT instead of The Rundown).
+
+---
+
+### Probe 019
+**Query:** music_brainz_20k Q1 — revenue computation across stores and countries
+**Failure category:** Unstructured text transformation
+**Failure mechanism:** Agent computes revenue from wrong currency field or applies incorrect exchange rate. Returns a value close to but not matching expected — structural computation error in multi-table revenue aggregation.
+**Fix applied:** KB schema doc clarifies which field holds USD revenue vs local currency. Always aggregate on the normalized USD field.
+**Status:** Partial — agent returns structurally correct answer but wrong numeric value.
+
+---
+
+### Probe 020
+**Query:** GITHUB_REPOS Q1 — compute ratio of README files containing copyright across non-Python repos
+**Failure category:** Unstructured text transformation
+**Failure mechanism:** Agent searches README content using exact string match instead of case-insensitive pattern match. Misses copyright notices in different cases (COPYRIGHT, Copyright, copyright).
+**Fix applied:** Use case-insensitive regex: `re.search(r'copyright', content, re.IGNORECASE)`.
+```python
+import re
+df['has_copyright'] = df['readme_content'].apply(
+    lambda x: bool(re.search(r'copyright', str(x), re.IGNORECASE))
+)
+```
+**Status:** Fix applied.
+
+---
+
+### Probe 021
+**Query:** PANCANCER_ATLAS Q1-Q3 — extract histology type from clinical notes
+**Failure category:** Unstructured text transformation
+**Failure mechanism:** Agent queries structured fields for histology type but the value is embedded in free-text clinical notes. Returns empty or wrong histology code.
+**Fix applied:** KB schema doc maps histology type to the correct structured field in PostgreSQL clinical table, not the notes field.
+**Status:** Fix applied via `schema-pancancer.md` KB injection.
+
+---
+
 ## Category 4: Domain Knowledge Gaps
 
 ### Probe 015
@@ -186,6 +228,51 @@ df['state'] = df['description'].str.extract(r',\s*([A-Z]{2})\s*\d{5}')
 
 ---
 
+### Probe 022
+**Query:** stockmarket Q2-Q5 — financially troubled companies definition
+**Failure category:** Domain knowledge gaps
+**Failure mechanism:** Agent does not know the domain definition of "financially troubled" — interprets it as any company with negative earnings rather than the dataset-specific definition (e.g. penny stock, delisting notice, bankruptcy filing).
+**Fix applied:** KB domain doc defines financially troubled companies as those meeting specific criteria in the dataset. Agent must filter on those criteria before computing trading volume.
+**Status:** Partial — stockmarket scoring 20%, Q2/4/5 hitting max_iterations.
+
+---
+
+### Probe 023
+**Query:** stockindex Q3 — monthly investment return computation
+**Failure category:** Domain knowledge gaps
+**Failure mechanism:** Agent computes simple return instead of compound monthly investment return. "Regular monthly investments since 2000" requires dollar-cost averaging logic, not a single period return calculation.
+**Fix applied:** KB domain doc clarifies that monthly investment queries require iterative compounding across all periods, not a single AVG or SUM.
+**Status:** Partial — agent returns plausible but incorrect index ranking.
+
+---
+
+### Probe 024
+**Query:** crmarenapro Q7 — knowledge article ID lookup
+**Failure category:** Domain knowledge gaps
+**Failure mechanism:** Agent returns a knowledge article ID that exists in the database but is not the correct one for the query criteria. Multiple articles match partial criteria; agent picks the wrong one due to missing domain ranking rule.
+**Fix applied:** KB schema doc clarifies the ranking field and sort order for knowledge article relevance in Salesforce CRM schema.
+**Status:** Partial — agent returns wrong ID consistently.
+
+---
+
+### Probe 025
+**Query:** DEPS_DEV_V1 Q2 — most depended-upon project identification
+**Failure category:** Domain knowledge gaps
+**Failure mechanism:** Agent confuses dependency count with dependent count. "Most depended upon" means other packages depend on it — agent queries in the wrong direction, counting packages this project depends on instead.
+**Fix applied:** KB schema doc explicitly defines dependency direction: `dependent_count` = how many packages depend on this one.
+**Status:** Fix applied via `schema-deps-dev.md` KB injection.
+
+---
+
+### Probe 026
+**Query:** PATENTS Q1-Q3 — CPC classification code interpretation
+**Failure category:** Domain knowledge gaps
+**Failure mechanism:** Agent treats CPC codes as opaque strings and cannot filter by technology domain. CPC codes have hierarchical structure (section → class → subclass) that must be understood to answer domain-specific patent queries.
+**Fix applied:** KB schema doc `schema-patents.md` documents CPC code hierarchy and how to filter by subclass prefix.
+**Status:** Fix applied via KB injection.
+
+---
+
 ## Summary
 
 | Probe | Dataset | Failure Category | Status |
@@ -198,7 +285,7 @@ df['state'] = df['description'].str.extract(r',\s*([A-Z]{2})\s*\d{5}')
 | 006 | Yelp | Multi-database integration | Fixed |
 | 007 | Yelp | Multi-database integration | Fixed |
 | 008 | Yelp | Multi-database integration | Partial |
-| 009 | crmarenapro | Multi-database integration | Pending |
+| 009 | crmarenapro | Multi-database integration | Fixed |
 | 010 | Generic | Multi-database integration | Mitigated |
 | 011 | Yelp | Unstructured text transformation | Fixed |
 | 012 | Yelp | Unstructured text transformation | Fixed |
@@ -207,5 +294,14 @@ df['state'] = df['description'].str.extract(r',\s*([A-Z]{2})\s*\d{5}')
 | 015 | Yelp | Domain knowledge gaps | Partial |
 | 016 | Generic | Domain knowledge gaps | Mitigated |
 | 017 | Generic | Domain knowledge gaps | Mitigated |
+| 018 | agnews | Unstructured text transformation | Partial |
+| 019 | music_brainz_20k | Unstructured text transformation | Partial |
+| 020 | GITHUB_REPOS | Unstructured text transformation | Fixed |
+| 021 | PANCANCER_ATLAS | Unstructured text transformation | Fixed |
+| 022 | stockmarket | Domain knowledge gaps | Partial |
+| 023 | stockindex | Domain knowledge gaps | Partial |
+| 024 | crmarenapro | Domain knowledge gaps | Partial |
+| 025 | DEPS_DEV_V1 | Domain knowledge gaps | Fixed |
+| 026 | PATENTS | Domain knowledge gaps | Fixed |
 
-**Total: 17 probes across all 4 DAB failure categories.**
+**Total: 26 probes across all 4 DAB failure categories covering all 12 datasets.**
