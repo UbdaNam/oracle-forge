@@ -13,8 +13,10 @@ Each entry: Date | Platform | Link | What it was about | Response (if any)
 | 4/13/2026 | Abdurahim | LinkedIn | https://www.linkedin.com/posts/abdurahim-miftah_were-currently-working-on-a-data-agent-using-activity-7449657719202172928-bBEY/ | Cross-Database Key Clarity             |
 | 4/14/2026 | Abdurahim | X        | https://x.com/abdugreat2/status/2043783397131079819                                                                             | Context Across Databases               |
 | 4/9/2026  | Efrata    | Reddit   | https://www.reddit.com/r/MachineLearning/comments/1la46eq/comment/og2zrbn/                                                      | Enterprise data integration nightmares |
+| 4/15/2026 | Efrata    | Medium   | https://medium.com/p/7f7bb25557bf                                                                                               | What a Knowledge Base Actually Does to an AI Agent |
 | 4/18/2026 | Abdurahim | X | https://x.com/abdugreat2/status/2045464433971892247 | Sprint 2 of building a production-grade data agent |
 | 4/18/2026 | Abdurahim | Medium | https://medium.com/@AbdurahimM./building-a-production-grade-data-agent-lessons-from-oracle-forge-13c29b6cccc6 | Building a Production-Grade Data Agent: Lessons from Oracle Forge |
+
 
 ## Community Participation Log
 
